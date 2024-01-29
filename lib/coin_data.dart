@@ -28,4 +28,5 @@ const List<String> cryptoList = [
   'LTC',
 ];
 
-class CoinData {}
+const kAPIkey = 'E0EABABF-0FB2-4F5E-B537-5C1A0C8345A8';
+const kUrl = 'https://rest.coinapi.io/v1/exchangerate';
