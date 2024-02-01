@@ -1,5 +1,6 @@
 import 'package:bitcoin_ticker/coin_api.dart';
 import 'package:bitcoin_ticker/coin_data.dart';
+import 'package:bitcoin_ticker/reusable_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
@@ -15,21 +16,42 @@ class _PriceScreenState extends State<PriceScreen> {
   String crypto = 'BTC';
   String currency = 'USD';
   double rate = 0;
+  List<double> bitcoinRates = [];
+  ContainerWidget containerWidget = ContainerWidget();
+  List<Widget> containers = [];
+  CoinAPI coinAPI = CoinAPI();
 
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    updateData();
+    displayContainers();
+
   }
 
-  void updateData() async{
-    CoinAPI coinAPI = CoinAPI(crypto, currency);
-    var data = await coinAPI.getExchangeRate();
-    setState(() {
-      rate = data['rate'];
-    });
+  Future<List<double>> updateData() async{
+    bitcoinRates.clear();
+    for(String cryptos in cryptoList) {
+      var data = await coinAPI.getExchangeRate(cryptos, currency);
+      bitcoinRates.add(data['rate']);//added the rates from the three bitcoins to a list
+    }
+    return bitcoinRates;
   }
+  //bitcoinRates.add(data['rate']);
+
+  void displayContainers() async{
+    containers.clear();
+    bitcoinRates = await updateData();
+    for(int i=0; i<3; i++){
+      crypto = cryptoList[i];
+      setState(() {
+        containers.add(containerWidget.buildContainers(bitcoinRates.isEmpty?0:bitcoinRates[i], currency, crypto));
+      });
+    }
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -41,26 +63,13 @@ class _PriceScreenState extends State<PriceScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ${NumberFormat("#,##0").format(rate)} $currency',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
+          (bitcoinRates.isEmpty)?
+          Container(
+              child: Center(child: CircularProgressIndicator())
+          ):
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: containers,
           ),
           Container(
             height: 150.0,
@@ -73,6 +82,7 @@ class _PriceScreenState extends State<PriceScreen> {
       ),
     );
   }
+
 
   DropdownButton<String> getDropdownButton(){
     List<DropdownMenuItem<String>> currencyList = [];
@@ -94,7 +104,7 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value){
         setState(() {
           currency = value!;
-          updateData();
+          displayContainers();
         });
       },
     );

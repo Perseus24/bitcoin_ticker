@@ -5,16 +5,12 @@ import 'package:flutter/material.dart';
 
 class CoinAPI{
 
-  CoinAPI(this.crypto, this.currency);
-  String crypto;
-  String currency;
-
-  Future<dynamic> getExchangeRate() async{
+  Future<dynamic> getExchangeRate(String crypto, String currency) async{
     NetworkHelper networkHelper = NetworkHelper('$kUrl/$crypto/$currency?apikey=$kAPIkey');
-
     var coinData = await networkHelper.getData();
-
-    return coinData;
+    if(coinData!=null){
+      return coinData;
+    }
 
   }
 }
